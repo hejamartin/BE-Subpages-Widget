@@ -88,9 +88,10 @@ class BE_Subpages_Widget extends WP_Widget {
 		
 		if( !isset( $instance['deep_subpages'] ) )
 			$instance['deep_subpages'] = 0;
-			
+		
+		$ulclass = 'widget_subpages';
 		// Print the tree
-		$this->build_subpages( $subpages, $parents, $instance['deep_subpages'], $depth );
+		$this->build_subpages( $subpages, $parents, $instance['deep_subpages'], $depth, $ulclass );
 		
 		echo $after_widget;			
 	}
@@ -103,26 +104,22 @@ class BE_Subpages_Widget extends WP_Widget {
 	 * @param bool $deep_subpages, whether to include current page's subpages
 	 * @return string $output
 	 */
-	function build_subpages( $subpages, $parents, $deep_subpages = 0, $depth = 1 ) {
-		global $post, $be_subpages_is_first;
-		// Build the page listing	
-		echo '<ul>';
+	function build_subpages( $subpages, $parents, $deep_subpages = 0, $depth = 1, $ulclass = '' ) {
+		global $post;
+		// Build the page listing
+		$ulclass = !empty( $ulclass ) ? ' class="' . $ulclass . '"' : '';
+		echo '<ul' . $ulclass . '>';
 		foreach ( $subpages as $subpage ) {
 			$class = array();
 			
 			// Set special class for current page
 			if ( $subpage->ID == $post->ID )
 				$class[] = 'widget_subpages_current_page';
-				
-			// First menu item
-			if( $be_subpages_is_first )
-				$class[] .= 'first-menu-item';
-			$be_subpages_is_first = false;
 			
 			$class = apply_filters( 'be_subpages_widget_class', $class, $subpage );
 			$class = !empty( $class ) ? ' class="' . implode( ' ', $class ) . '"' : '';
 
-			echo '<li' . $class . '><a href="' . get_page_link( $subpage->ID ) . '">' . apply_filters( 'be_subpages_page_title', $subpage->post_title ) . '</a></li>';
+			echo '<li' . $class . '><a href="' . get_page_link( $subpage->ID ) . '">' . apply_filters( 'be_subpages_page_title', $subpage->post_title ) . '</a>';
 			// Check if the subpage is in parent tree to go deeper
 			if ( $deep_subpages && in_array( $subpage->ID, $parents ) ) {
 				$args = array(
@@ -132,8 +129,9 @@ class BE_Subpages_Widget extends WP_Widget {
 				);
 				$deeper_pages = get_pages( apply_filters( 'be_subpages_widget_args', $args, $depth ) );
 				$depth++;
-				$this->build_subpages( $deeper_pages, $parents, $deep_subpages, $depth );
+				$this->build_subpages( $deeper_pages, $parents, $deep_subpages, $depth, 'sublist' );
 			}
+			echo '</li>';
 		}
 		echo '</ul>';
 	}
